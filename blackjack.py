@@ -238,35 +238,41 @@ def draw_game(game):
     # Check for Blackjack
     if hand_value(game["player_hand"])[1] == 21 and len(game["player_hand"]) == 2:
         game["status"] = "blackjack"
-
+# 
+# 
+# 
+# MAKE IT SO THAT THE STARTING POSITION IS OFF THE MAP, THEN SLIDE IT IN VIA INCREMENTING POS
+#
+#
+#
 def draw_game_over():
-    dim_screen = pygame.Surface((640,360))
+    dim_screen = pygame.Surface((screen.get_width(),screen.get_height()))
     dim_screen.fill((0,0,0))
     dim_screen.set_alpha(150)
 
     screen.blit(dim_screen,(0,0))
     
     if game["status"] == "blackjack":
-        Text("BLACKJACK",80,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("BLACKJACK",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
     if game["status"] == "busted":
-        Text("BUSTED",80,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()        
+        Text("BUSTED",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()        
     if game["status"] == "win":
-        Text("YOU WIN",80,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("YOU WIN",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
     if game["status"] == "loss":
-        Text("YOU LOSE",80,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("YOU LOSE",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
     if game["status"] == "draw":
-        Text("DRAW",80,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("DRAW",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
     
     title_button.draw()
 
 def draw_hand(hand):
-    w = 100
-    h = 150
+    w = screen.get_width() * (5 / 32)
+    h = screen.get_width() * (15 / 64)
     height = screen.get_height()
-    spacing = 10
+    spacing = w // 10
     card_count = len(hand)
-    increment = 360/(card_count + 1)
-    start_x = (increment-(w/2)) + 140
+    increment = (screen.get_width() - (2*(screen.get_width() // 5)))// (card_count + 1)
+    start_x = (increment-(w//2)) + (screen.get_width() // 5)
     y_pos = height - h - spacing if hand == game["player_hand"] else spacing
 
     for i, card in enumerate(hand):
@@ -313,19 +319,19 @@ def handle_button_actions(game):
 # ~~~ SETUP ~~~
 pygame.init()
 # Window setup
-screen = pygame.display.set_mode((640,360))
+monitor_size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+screen = pygame.display.set_mode(monitor_size)
 pygame.display.set_caption("Blackjack")
 # Text
-title = Text("BLACKJACK",80,'#F5F2D0',(screen.get_width()/2,100))
-dealer_text = Text("DEALER CARDS",30,'#F5F2D0',(screen.get_width()/2,20))
-player_text = Text("YOUR CARDS",30,'#F5F2D0',(screen.get_width()/2,screen.get_height()-20))
+title = Text("BLACKJACK",screen.get_height()//4,'#F5F2D0',(screen.get_width()//2,screen.get_height()//5))
+dealer_text = Text("DEALER CARDS",screen.get_height()//10,'#F5F2D0',(screen.get_width()//2,screen.get_height()//15))
+player_text = Text("YOUR CARDS",screen.get_height()//10,'#F5F2D0',(screen.get_width()//2,screen.get_height()-screen.get_height()//18))
 # Buttons
-b_pos = (200,200)
-start_button = Button("START",50,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()-2*b_pos[0], 50, (b_pos), 10)
-quit_button = Button("QUIT",50,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()-2*b_pos[0], 50, (b_pos[0],b_pos[1]+75), 10)
-hit_button = Button("HIT",40,"#DA8325F8","#92490DFF","#321904FF",100, 50, (60,300), 8)
-stand_button = Button("STAND",40,"#DA8325F8","#92490DFF","#321904FF",100, 50, (480,300), 8)
-title_button = Button("TITLE SCREEN",35,"#D23624FF","#750D0DFF","#381212FF",200, 50, (400,40), 8)
+start_button = Button("START",screen.get_height()//7 * 8 // 10,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()//4, screen.get_height()//10, (screen.get_width()//2 - screen.get_width()//4//2,screen.get_height()//2), 10)
+quit_button = Button("QUIT",screen.get_height()//7 * 8 // 10,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()//4, screen.get_height()//10, (screen.get_width()//2 - screen.get_width()//4//2,screen.get_height()//2+screen.get_height()//8), 10)
+hit_button = Button("HIT",screen.get_height()//8 * 6 // 10,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()//9, screen.get_height()//14, (screen.get_width()//10,screen.get_height() * 8 // 10), 8)
+stand_button = Button("STAND",screen.get_height()//8 * 6 // 10,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()//9, screen.get_height()//14, (screen.get_width()-screen.get_width()//9-screen.get_width()//10,screen.get_height() * 8 // 10), 8)
+title_button = Button("TITLE SCREEN",screen.get_height()//10 * 6 // 10,"#D23624FF","#750D0DFF","#381212FF",screen.get_width()//5, screen.get_height()//14, ((screen.get_width()-screen.get_width()//5)-screen.get_width()//12,screen.get_height()//12), 8)
 # Tracking variables
 game = {
     "state": "title",
