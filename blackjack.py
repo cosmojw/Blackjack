@@ -184,9 +184,13 @@ def start_round(game):
         game["status"] = "blackjack"
 
 def handle_hit(game):
-    game["player_hand"].append(get_card(game))
-    if hand_value(game["player_hand"])[0] > 21:
-        game["status"] = "busted"
+    card = get_card(game)
+    if card is None:
+        game["status"] = "empty shoe"
+    else:
+        game["player_hand"].append(card)
+        if hand_value(game["player_hand"])[0] > 21:
+            game["status"] = "busted"
 
 def handle_stand(game):
 
@@ -204,7 +208,7 @@ def handle_stand(game):
         game["status"] = "draw"
 
 def deal_new_hands(game):
-    if len(game["shoe"]) < 4:
+    if len(game["shoe"]) < 8:
         game["status"] = "empty shoe"
     else:
         game["player_hand"] = []
@@ -294,6 +298,8 @@ def draw_game_over(game):
 
     title_button.draw()
     play_again_button.draw()
+    win_count_text = Text(f"WINS: {game['win_count']}",screen.get_height()//10,"#FFD256",(screen.get_width()//6,screen.get_height()//15))
+    win_count_text.draw()
 
 def draw_hand(hand):
     w = screen.get_width() * (5 / 32)
