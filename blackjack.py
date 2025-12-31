@@ -178,6 +178,10 @@ def start_round(game):
     game["dealer_hand"].append(get_card(game))
     game["player_hand"].append(get_card(game))
     game["dealer_hand"].append(get_card(game))
+    
+    # Check for Blackjack
+    if hand_value(game["player_hand"])[1] == 21 and len(game["player_hand"]) == 2:
+        game["status"] = "blackjack"
 
 def handle_hit(game):
     game["player_hand"].append(get_card(game))
@@ -185,6 +189,7 @@ def handle_hit(game):
         game["status"] = "busted"
 
 def handle_stand(game):
+
     low_v,high_v,aces = hand_value(game["dealer_hand"])
     while ((aces == False and low_v < 17) or (aces == True and high_v <= 17) or (aces == True and low_v < 17 and high_v > 21)):
         game["dealer_hand"].append(get_card(game))
@@ -198,6 +203,17 @@ def handle_stand(game):
     else:
         game["status"] = "draw"
 
+def deal_new_hands(game):
+    if len(game["shoe"]) < 4:
+        game["status"] = "empty shoe"
+    else:
+        game["player_hand"] = []
+        game["dealer_hand"] = []
+        game["player_hand"].append(get_card(game))
+        game["dealer_hand"].append(get_card(game))
+        game["player_hand"].append(get_card(game))
+        game["dealer_hand"].append(get_card(game))
+
 def update_game(game):
     """Handle all game logic updates"""
     if game["action"] == "hit":
@@ -208,6 +224,20 @@ def update_game(game):
     elif game["action"] == "stand":
         handle_stand(game)
         game["state"] = "game"
+
+    elif game["action"] == "play again":
+        deal_new_hands(game)
+        game["state"] = "game"
+        game["action"] = ""
+    
+    if game["status"] == "empty shoe":
+        game["shoe"].clear()
+        game["shoe"].extend(make_shoe())
+        random.shuffle(game["shoe"])
+
+    if game["status"] != game["previous_status"] and game["status"] in ("win", "blackjack"):
+        game["win_count"] += 1
+    game["previous_status"] = game["status"]
 
 # ~~~ RENDERING ~~~
 def draw_title():
@@ -227,43 +257,43 @@ def draw_game(game):
     dealer_text.draw()
     player_text.draw()
 
+    win_count_text = Text(f"WINS: {game['win_count']}",screen.get_height()//10,"#E28282",(screen.get_width()//6,screen.get_height()//15))
+    win_count_text.draw()
+
     # Draws updates
     draw_hand(game["dealer_hand"])
     draw_hand(game["player_hand"])
     
     # Game over screens
     if game["status"] != "playing":    
-        draw_game_over()
+        draw_game_over(game)
 
-    # Check for Blackjack
-    if hand_value(game["player_hand"])[1] == 21 and len(game["player_hand"]) == 2:
-        game["status"] = "blackjack"
-# 
-# 
-# 
-# MAKE IT SO THAT THE STARTING POSITION IS OFF THE MAP, THEN SLIDE IT IN VIA INCREMENTING POS
-#
-#
-#
-def draw_game_over():
+def draw_game_over(game):
     dim_screen = pygame.Surface((screen.get_width(),screen.get_height()))
     dim_screen.fill((0,0,0))
     dim_screen.set_alpha(150)
 
     screen.blit(dim_screen,(0,0))
     
+    y_pos = screen.get_height()*2
+
     if game["status"] == "blackjack":
-        Text("BLACKJACK",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("BLACKJACK",screen.get_height()//5,'#F5F2D0',(screen.get_width()//2,y_pos+game["dynamic_y_pos"])).draw()
     if game["status"] == "busted":
-        Text("BUSTED",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()        
+        Text("BUSTED",screen.get_height()//5,'#F5F2D0',(screen.get_width()//2,y_pos+game["dynamic_y_pos"])).draw()        
     if game["status"] == "win":
-        Text("YOU WIN",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("YOU WIN",screen.get_height()//5,'#F5F2D0',(screen.get_width()//2,y_pos+game["dynamic_y_pos"])).draw()
     if game["status"] == "loss":
-        Text("YOU LOSE",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
+        Text("YOU LOSE",screen.get_height()//5,'#F5F2D0',(screen.get_width()//2,y_pos+game["dynamic_y_pos"])).draw()
     if game["status"] == "draw":
-        Text("DRAW",screen.get_height()//5,'#F5F2D0',(screen.get_width()/2,screen.get_height()/2)).draw()
-    
+        Text("DRAW",screen.get_height()//5,'#F5F2D0',(screen.get_width()//2,y_pos+game["dynamic_y_pos"])).draw()
+    if game["status"] == "empty shoe":
+        Text("EMPTY SHOE",screen.get_height()//5,'#F5F2D0',(screen.get_width()//2,y_pos+game["dynamic_y_pos"])).draw()
+    if game["status"] != "playing" and (y_pos+game["dynamic_y_pos"]) > screen.get_height()//2:
+        game["dynamic_y_pos"] -= 15
+
     title_button.draw()
+    play_again_button.draw()
 
 def draw_hand(hand):
     w = screen.get_width() * (5 / 32)
@@ -315,6 +345,15 @@ def handle_button_actions(game):
         game["state"] = "title"
         game["action"] = ""
         game["status"] = "playing"
+        game["dynamic_y_pos"] = 0
+        game["win_count"] = 0
+
+    if play_again_button.action_triggered:
+        play_again_button.action_triggered = False
+        game["state"] = "game"
+        game["action"] = "play again"
+        game["status"] = "playing"
+        game["dynamic_y_pos"] = 0
 
 # ~~~ SETUP ~~~
 pygame.init()
@@ -332,15 +371,22 @@ quit_button = Button("QUIT",screen.get_height()//7 * 8 // 10,"#DA8325F8","#92490
 hit_button = Button("HIT",screen.get_height()//8 * 6 // 10,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()//9, screen.get_height()//14, (screen.get_width()//10,screen.get_height() * 8 // 10), 8)
 stand_button = Button("STAND",screen.get_height()//8 * 6 // 10,"#DA8325F8","#92490DFF","#321904FF",screen.get_width()//9, screen.get_height()//14, (screen.get_width()-screen.get_width()//9-screen.get_width()//10,screen.get_height() * 8 // 10), 8)
 title_button = Button("TITLE SCREEN",screen.get_height()//10 * 6 // 10,"#D23624FF","#750D0DFF","#381212FF",screen.get_width()//5, screen.get_height()//14, ((screen.get_width()-screen.get_width()//5)-screen.get_width()//12,screen.get_height()//12), 8)
+play_again_button = Button("PLAY AGAIN",screen.get_height()//10 * 6 // 10,"#D23624FF","#750D0DFF","#381212FF",screen.get_width()//5, screen.get_height()//14, ((screen.get_width()-screen.get_width()//5)-screen.get_width()//12,screen.get_height()//12+screen.get_height()*1.2 //14), 8)
+
 # Tracking variables
 game = {
     "state": "title",
     "status": "playing",
+    "previous_status": "playing",
     "action": "",
     "shoe": [],
     "player_hand": [],
-    "dealer_hand": []
+    "dealer_hand": [],
+    "dynamic_y_pos": 0,
+    "win_count": 0,
 }
+# # In game tracking variables
+# win_count_text = Text(f"WINS: {game['win_count']}",screen.get_height()//10,"#E28282",(screen.get_width()//5,screen.get_height()//15))
 
 # ~~~ MAIN LOOP ~~~
 running = True
