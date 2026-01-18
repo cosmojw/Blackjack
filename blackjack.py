@@ -98,7 +98,7 @@ class Card:
     def draw(self,width,height,pos):
         image_folder = "Sprites"
         image_filename = str(self.suit) + ' ' + str(self.rank) + '.png'
-        full_image_path = os.path.join(image_folder, image_filename)
+        full_image_path = os.path.join("Blackjack", image_folder, image_filename)
         try:
             # Load the image and convert it to the display's pixel format for faster blitting
             loaded_image = pygame.image.load(create_path(full_image_path)).convert_alpha() # Use convert_alpha() for images with transparency
@@ -116,7 +116,7 @@ class Card:
         if self.face_up == False:
             image_folder = "Sprites"
             image_filename = 'Card Back 1.png'
-            full_image_path = os.path.join(image_folder, image_filename)
+            full_image_path = os.path.join("Blackjack", image_folder, image_filename)
             loaded_image = pygame.image.load(create_path(full_image_path)).convert_alpha()
             loaded_image = pygame.transform.scale(loaded_image,(width,height))
             screen.blit(loaded_image, pos)
@@ -142,7 +142,7 @@ def card_value(card): # returns an integer
 
 def hand_value(hand): # returns tuple of high and low value
     if not hand:
-        return 0, 0
+        return 0, 0, None
     low_v = 0
     aces = 0
 
